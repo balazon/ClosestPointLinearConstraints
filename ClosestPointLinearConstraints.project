@@ -21,6 +21,10 @@
   <Dependencies/>
   <VirtualDirectory Name="src">
     <File Name="main.cpp"/>
+    <File Name="Tester.h"/>
+    <File Name="Tester.cpp"/>
+    <File Name="CPLPSolver.h"/>
+    <File Name="CPLPSolver.cpp"/>
   </VirtualDirectory>
   <Settings Type="Executable">
     <GlobalSettings>
