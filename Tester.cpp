@@ -5,6 +5,8 @@
 
 #include <cmath>
 
+#define EPS 0.001
+
 Test::Test(float u, float v, std::vector<float> constraints, bool feasible, float optX, float optY)
 	: u{u}, v{v}, constraints{constraints}, feasible{feasible}, optX{optX}, optY{optY}
 {
@@ -49,7 +51,7 @@ void Tester::InitTests()
 	float c5[] = {1.f, 1.f, 7.f,
 				  -2.f, 1.f, 4.f,
 				  -2.f, -1.f, 4.f,
-				  0.666667f - 1.f, 1.33333f};
+				  2.f/3.f, - 1.f, 4.f/3.f};
 	constraints.assign(c5, c5 + 3 * 4);
 	Test t5{-3.f, 3.f, constraints, true, -1.f, 2.f};
 	AddTest(t5);
@@ -66,8 +68,10 @@ void Tester::RunTests()
 	
 	int testCount = tests.size();
 	int passedTest = 0;
+	int testIndex = 0;
 	for(Test t : tests)
 	{
+		testIndex++;
 		float x = 0.f;
 		float y = 0.f;
 	
@@ -80,6 +84,21 @@ void Tester::RunTests()
 		}
 		solver.Solve(x, y);
 		bool feasible = solver.HasSolution();
+		const char* str_feasible = "feasible";
+		const char* str_not_feasible = "not feasible";
+		
+		std::cout << "Test " << testIndex << ": " << (t.feasible ? str_feasible : str_not_feasible);
+		if(t.feasible)
+			std::cout << ", opt at ("<< t.optX << "," << t.optY << ")\n";
+		else
+			std::cout << "\n";
+		
+		std::cout << "Solver result: " << (feasible ? str_feasible : str_not_feasible);
+		if(feasible)
+			std::cout << ", opt at: ("<< x << "," << y << ")\n\n";
+		else
+			std::cout << "\n\n";
+			
 		if(!t.feasible && !feasible)
 		{
 			passedTest++;

@@ -3,7 +3,7 @@
 #include "CPLPSolver.h"
 #include <vector>
 
-#define EPS 0.001
+
 
 struct Test
 {
