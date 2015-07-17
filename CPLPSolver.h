@@ -25,6 +25,9 @@ private:
 	
 	//3 elements define a constraint
 	std::vector<float> constraints;
+	
+	
+	bool feasible;
 };
 
 
