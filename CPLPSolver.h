@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <unordered_set>
 
 //CPLP for Closest Point Linear Programming
 class CPLPSolver
@@ -28,6 +29,8 @@ private:
 	
 	
 	bool feasible;
+	
+	bool pointSatisfiesConstraints(float tx, float ty, const std::unordered_set<int>& filterIndexes = std::unordered_set<int>{});
 	
 };
 

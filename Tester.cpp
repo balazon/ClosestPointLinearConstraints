@@ -42,7 +42,7 @@ void Tester::InitTests()
 	Test t2{2.5f, 2.5f, constraints, true, 2.5f, 2.5f};
 	AddTest(t2);
 	
-	Test t3{7.f, -2.f, constraints, true, 7.f, 5.f};
+	Test t3{7.f, -2.f, constraints, true, 5.f, -2.f};
 	AddTest(t3);
 	
 	Test t4{7.f, 7.f, constraints, true, 5.f, 5.f};
@@ -55,6 +55,36 @@ void Tester::InitTests()
 	constraints.assign(c5, c5 + 3 * 4);
 	Test t5{-3.f, 3.f, constraints, true, -1.f, 2.f};
 	AddTest(t5);
+	
+	float c6[] = {1.f, 1.f, 7.f,
+				  -2.f, 1.f, 4.f,
+				  -2.f, -1.f, 4.f,
+				  2.f/3.f, - 1.f, 4.f/3.f,
+				  0.8f, 1.f, 10.f,
+				  1.f/3.f, -1.f, 3.f};
+	constraints.assign(c6, c6 + 3 * 6);
+	Test t6{-3.f, 3.f, constraints, true, -1.f, 2.f};
+	AddTest(t6);
+	
+	float c7[] = {1.f, 1.f, 7.f,
+				  -2.f, 1.f, 4.f,
+				  -2.f, -1.f, 4.f,
+				  2.f/3.f, - 1.f, 4.f/3.f,
+				  0.8f, 1.f, 10.f,
+				  1.f/3.f, -1.f, 3.f};
+	constraints.assign(c7, c7 + 3 * 6);
+	Test t7{-7.f, -1.f, constraints, true, -2.f, 0.f};
+	AddTest(t7);
+	
+	float c8[] = {1.f, 1.f, 7.f,
+				  -2.f, 1.f, 4.f,
+				  -2.f, -1.f, 4.f,
+				  2.f/3.f, - 1.f, 4.f/3.f,
+				  0.8f, 1.f, 10.f,
+				  1.f/3.f, -1.f, 3.f};
+	constraints.assign(c8, c8 + 3 * 6);
+	Test t8{6.f, 5.f, constraints, true, 4.f, 3.f};
+	AddTest(t8);
 }
 
 void Tester::AddTest(Test t)

@@ -3,6 +3,8 @@
 #include <cmath>
 #include <iostream>
 
+
+
 #define EPS 0.001
 
 CPLPSolver::CPLPSolver()
@@ -57,6 +59,40 @@ void printArray(std::vector<float>& arr)
 void processOneDim(float& minOfUpper, float& maxOfLower, float k, float q)
 {
 	
+}
+
+bool CPLPSolver::pointSatisfiesConstraints(float tx, float ty, const std::unordered_set<int>& filterIndexes)
+{
+	for(int i = 0; i < constraints.size() / 3; i++)
+	{
+		if(filterIndexes.count(i) == 0 && constraints[i * 3] * tx + constraints[i * 3 + 1] * ty > constraints[i * 3 + 2]) // + EPS  to the end?
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
+
+//intersection point of two lines : Ax + By = C, Dx + Ey = F
+//returns false if parallel
+bool intersectLines(float A, float B, float C, float D, float E, float F, float& resX, float& resY)
+{
+	float denominator = D * B - E * A;
+	if(fabs(denominator) < EPS) return false;
+	
+	resX = (F * B - E * C) / denominator;
+	resY = (C * D - A * F) / denominator;
+	return true;
+}
+
+//line: Ax + By = C
+//point: (tx, ty)
+void orthogonalProjectionOfPointOnLine(float A, float B, float C, float tx, float ty, float& resX, float& resY)
+{
+	float denominator = A * A + B * B;
+	resX = (B * B * tx - A * B * ty + A * C) / denominator;
+	resY = (A * A * ty - A * B * tx + B * C) / denominator;
 }
 
 void CPLPSolver::Solve(float& resX, float& resY)
@@ -167,6 +203,56 @@ void CPLPSolver::Solve(float& resX, float& resY)
 	
 	//if program reached this point, it means problem is feasible
 	
-	//TODO solving.. by intersections and creating convex polygon ?
+	float tx = u;
+	float ty = v;
+	
+	if(pointSatisfiesConstraints(tx, ty))
+	{
+		//lucky - destination is inside constraints
+		resX = u;
+		resY = v;
+		return;
+	}
+	
+	float minDistSqr = 1e9;
+	
+	//a not too elegant solution: searching all intersection points, and orthogonal projection points on the constraint lines, filtering them and finding the closest one
+	//constraint intersection points
+	std::unordered_set<int> filter(2);
+	for(int i = 0; i < constraints.size() / 3; i++)
+	{
+		for(int j = i + 1; j < constraints.size() / 3; j++)
+		{
+			filter.clear();
+			filter.insert(i);
+			filter.insert(j);
+			float tdist;
+			if(intersectLines(constraints[i * 3], constraints[i * 3 + 1], constraints[i * 3 + 2], constraints[j * 3], constraints[j * 3 + 1], constraints[j * 3 + 2], tx, ty)
+			&& pointSatisfiesConstraints(tx, ty, filter) && ((tdist = (tx - u) * (tx - u) + (ty - v) * (ty - v)) < minDistSqr))
+			{
+				resX = tx;
+				resY = ty;
+				minDistSqr = tdist;
+			}
+		}
+	}
+	
+	//orthogonal projection points
+	for(int i = 0; i < constraints.size() / 3; i++)
+	{
+		filter.clear();
+		filter.insert(i);
+		float tdist;
+		orthogonalProjectionOfPointOnLine(constraints[i * 3], constraints[i * 3 + 1], constraints[i * 3 + 2], u, v, tx, ty);
+		if(pointSatisfiesConstraints(tx, ty, filter) && ((tdist = (tx - u) * (tx - u) + (ty - v) * (ty - v)) < minDistSqr))
+		{
+			resX = tx;
+			resY = ty;
+			minDistSqr = tdist;
+		}
+		
+	}
+	
+	//TODO using a quadratic library, or optimizing current solution : currently runtime should be O(n^2) where n is number of constraints
 }
 
