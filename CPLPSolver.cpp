@@ -10,6 +10,7 @@
 CPLPSolver::CPLPSolver()
 {
 	constraints.reserve(30);
+	constraintTypes.reserve(30);
 }
 
 CPLPSolver::~CPLPSolver()
@@ -22,12 +23,24 @@ void CPLPSolver::Reset()
 	feasible = true;
 }
 
-void CPLPSolver::AddConstraint(float A, float B, float C)
+void CPLPSolver::AddConstraintLinear(float A, float B, float C)
 {
 	constraints.reserve(constraints.size() + 3);
 	constraints.push_back(A);
 	constraints.push_back(B);
 	constraints.push_back(C);
+	
+	constraintTypes.push_back(CT_LINEAR);
+}
+
+void CPLPSolver::AddConstraintCircle(float U, float V, float R)
+{
+	constraints.reserve(constraints.size() + 3);
+	constraints.push_back(U);
+	constraints.push_back(V);
+	constraints.push_back(R);
+	
+	constraintTypes.push_back(CT_CIRCLE);
 }
 
 void CPLPSolver::SetDestination(float u, float v)
@@ -65,9 +78,17 @@ bool CPLPSolver::pointSatisfiesConstraints(float tx, float ty, const std::unorde
 {
 	for(int i = 0; i < constraints.size() / 3; i++)
 	{
-		if(filterIndexes.count(i) == 0 && constraints[i * 3] * tx + constraints[i * 3 + 1] * ty > constraints[i * 3 + 2]) // + EPS  to the end?
+		if(filterIndexes.count(i) == 0)
 		{
-			return false;
+			if(constraintTypes[i] == CT_LINEAR && constraints[i * 3] * tx + constraints[i * 3 + 1] * ty > constraints[i * 3 + 2]) // + EPS  to the end?)
+			{
+				return false;
+			}
+			else if (constraintTypes[i] == CT_CIRCLE &&
+				(tx - constraints[i * 3]) * (tx - constraints[i * 3]) + (ty - constraints[i * 3 + 1]) * (ty - constraints[i * 3 + 1]) > constraints[i * 3 + 2] * constraints[i * 3 + 2])
+			{
+				return false;
+			}
 		}
 	}
 	return true;
@@ -95,9 +116,60 @@ void orthogonalProjectionOfPointOnLine(float A, float B, float C, float tx, floa
 	resY = (A * A * ty - A * B * tx + B * C) / denominator;
 }
 
-void CPLPSolver::Solve(float& resX, float& resY)
+bool quadraticEquation(float a, float b, float c, float& x1, float& x2)
 {
-	printArray(constraints);
+	float D;
+	if(fabs(a) < EPS)
+	{
+		x1 = x2 = - c / b;
+		return true;
+	}
+	if((D = b * b - 4 * a * c) < 0)
+	{
+		return false;
+	}
+	float denom_reciproc = .5f / a;
+	float sqrtD = sqrtf(D);
+	x1 = (- b + sqrtD) * denom_reciproc;
+	x2 = (- b - sqrtD) * denom_reciproc;
+	return true;
+}
+
+bool intersectLineCircle(float A, float B, float C, float u, float v, float r, float& x1, float& y1, float& x2, float& y2)
+{
+	bool swapped = false;
+	if(fabs(B) < EPS)
+	{
+		swapped = true;
+		std::swap(u, v);
+		std::swap(A, B);
+	}
+	float a = A * A + B * B;
+	float b = - 2.f * C * A - 2.f * u * B * B + 2.f * v * A * B;
+	float c = C * C - 2.f * v * C * B + (u * u + v * v - r * r) * B * B;
+	bool solvable = quadraticEquation(a, b, c, x1, x2);
+	if(!solvable)
+	{
+		return false;
+	}
+	y1 = (C - A * x1) / B;
+	y2 = (C - A * x2) / B;
+	if(swapped)
+	{
+		std::swap(x1, y1);
+		std::swap(x2, y2);
+	}
+	return true;
+}
+
+bool intersectCircleCircle(float u1, float v1, float r1, float u2, float v2, float r2, float& x1, float& y1, float& x2, float& y2)
+{
+	return intersectLineCircle(u1 - u2, v1 - v2, .5f * ((r2 + r1) * (r2 - r1) + (u1 + u2) * (u1 - u2) + (v1 + v2) * (v1 - v2)), u1, v1, r1, x1, y1, x2, y2);
+}
+
+void CPLPSolver::solveFeasibility()
+{
+	//making x coeffs 1, -1 or 0
 	for(int i = 0; i < constraints.size() / 3; i++)
 	{
 		float coeff = fabs(constraints[i * 3]);
@@ -110,8 +182,6 @@ void CPLPSolver::Solve(float& resX, float& resY)
 		constraints[i * 3 + 1] = constraints[i * 3 + 1] / coeff;
 		constraints[i * 3 + 2] = constraints[i * 3 + 2] / coeff;
 	}
-	
-	printArray(constraints);
 	
 	float minOfUpper = 1e9;
 	float maxOfLower = 1e9;
@@ -201,6 +271,22 @@ void CPLPSolver::Solve(float& resX, float& resY)
 		}
 	}
 	
+}
+
+void CPLPSolver::Solve(float& resX, float& resY)
+{
+	//printArray(constraints);
+	
+	
+	printArray(constraints);
+	
+	//TODO randomized algorithm with circle constraints as well - feaseibility? 
+	
+	solveFeasibility();
+	if(!feasible)
+	{
+		return;
+	}
 	//if program reached this point, it means problem is feasible
 	
 	float tx = u;
