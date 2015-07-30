@@ -96,6 +96,13 @@ void Tester::InitTests()
 	Test t9{7.f, -2.f, constraints, circleConstraints, true, 4.f, 1.f};
 	AddTest(t9);
 	
+	
+	constraints.assign(c2, c2 + 3 * 3);
+	float cc2[] = {3.f, 2.f, sqrtf(2.f),
+				   5.5f, 1.f, 1.5f};
+	circleConstraints.assign(cc2, cc2 + 3 * 2);
+	Test t10{3.f, -3.f, constraints, circleConstraints, true, 4.f, 1.f};
+	AddTest(t10);
 }
 
 void Tester::AddTest(Test t)

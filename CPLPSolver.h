@@ -24,6 +24,7 @@ public:
 	void Solve(float& resX, float& resY);
 	
 private:
+	//destination coordinates
 	float u, v;
 	
 	enum ConstraintType {CT_LINEAR, CT_CIRCLE};
@@ -35,7 +36,9 @@ private:
 	
 	bool feasible;
 	
-	bool pointSatisfiesConstraints(float tx, float ty, const std::unordered_set<int>& filterIndexes = std::unordered_set<int>{});
+	std::vector<int> order;
+	
+	std::unordered_set<int> filter;
 	
 	//nth constraint in array (not in the random order)
 	bool pointSatisfiesConstraint(float tx, float ty, int n);
@@ -43,14 +46,7 @@ private:
 	//with regard to random order
 	bool pointSatisfiesConstraints(float tx, float ty, int n);
 	
-	void solveFeasibility();
-	
 	void createRandomOrder();
-	
-	std::vector<int> order;
-	
-	std::unordered_set<int> filter;
-	
 };
 
 
