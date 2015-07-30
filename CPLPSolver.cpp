@@ -2,7 +2,9 @@
 
 #include <cmath>
 #include <iostream>
+#include <algorithm>
 
+#include "MathUtils.h"
 
 
 #define EPS 0.001
@@ -11,6 +13,7 @@ CPLPSolver::CPLPSolver()
 {
 	constraints.reserve(30);
 	constraintTypes.reserve(30);
+	order.reserve(30);
 }
 
 CPLPSolver::~CPLPSolver()
@@ -21,6 +24,7 @@ void CPLPSolver::Reset()
 {
 	constraints.clear();
 	feasible = true;
+	
 }
 
 void CPLPSolver::AddConstraintLinear(float A, float B, float C)
@@ -54,6 +58,7 @@ bool CPLPSolver::HasSolution()
 	//? how
 	return feasible;
 }
+
 void printArray(std::vector<float>& arr)
 {
 	std::cout << "tomb: ";
@@ -65,6 +70,16 @@ void printArray(std::vector<float>& arr)
 			std::cout << ", ";
 		else
 			std::cout << " ";
+	}
+	std::cout << "\n";
+}
+
+void printOrder(std::vector<int>& order)
+{
+	std::cout << "order: ";
+	for(int i = 0; i < order.size(); i++)
+	{
+		std::cout << order[i] << " ";
 	}
 	std::cout << "\n";
 }
@@ -94,78 +109,55 @@ bool CPLPSolver::pointSatisfiesConstraints(float tx, float ty, const std::unorde
 	return true;
 }
 
-
-//intersection point of two lines : Ax + By = C, Dx + Ey = F
-//returns false if parallel
-bool intersectLines(float A, float B, float C, float D, float E, float F, float& resX, float& resY)
+bool CPLPSolver::pointSatisfiesConstraint(float tx, float ty, int n)
 {
-	float denominator = D * B - E * A;
-	if(fabs(denominator) < EPS) return false;
+	if(filter.count(n) == 0)
+	{
+		if(constraintTypes[n] == CT_LINEAR && constraints[n * 3] * tx + constraints[n * 3 + 1] * ty > constraints[n * 3 + 2]) // + EPS  to the end?)
+		{
+			return false;
+		}
+		else if (constraintTypes[n] == CT_CIRCLE &&
+			(tx - constraints[n * 3]) * (tx - constraints[n * 3]) + (ty - constraints[n * 3 + 1]) * (ty - constraints[n * 3 + 1]) > constraints[n * 3 + 2] * constraints[n * 3 + 2])
+		{
+			return false;
+		}
+	}
 	
-	resX = (F * B - E * C) / denominator;
-	resY = (C * D - A * F) / denominator;
 	return true;
 }
 
-//line: Ax + By = C
-//point: (tx, ty)
-void orthogonalProjectionOfPointOnLine(float A, float B, float C, float tx, float ty, float& resX, float& resY)
+bool CPLPSolver::pointSatisfiesConstraints(float tx, float ty, int n)
 {
-	float denominator = A * A + B * B;
-	resX = (B * B * tx - A * B * ty + A * C) / denominator;
-	resY = (A * A * ty - A * B * tx + B * C) / denominator;
-}
-
-bool quadraticEquation(float a, float b, float c, float& x1, float& x2)
-{
-	float D;
-	if(fabs(a) < EPS)
+	for(int j = 0; j < n; j++)
 	{
-		x1 = x2 = - c / b;
-		return true;
-	}
-	if((D = b * b - 4 * a * c) < 0)
-	{
-		return false;
-	}
-	float denom_reciproc = .5f / a;
-	float sqrtD = sqrtf(D);
-	x1 = (- b + sqrtD) * denom_reciproc;
-	x2 = (- b - sqrtD) * denom_reciproc;
-	return true;
-}
-
-bool intersectLineCircle(float A, float B, float C, float u, float v, float r, float& x1, float& y1, float& x2, float& y2)
-{
-	bool swapped = false;
-	if(fabs(B) < EPS)
-	{
-		swapped = true;
-		std::swap(u, v);
-		std::swap(A, B);
-	}
-	float a = A * A + B * B;
-	float b = - 2.f * C * A - 2.f * u * B * B + 2.f * v * A * B;
-	float c = C * C - 2.f * v * C * B + (u * u + v * v - r * r) * B * B;
-	bool solvable = quadraticEquation(a, b, c, x1, x2);
-	if(!solvable)
-	{
-		return false;
-	}
-	y1 = (C - A * x1) / B;
-	y2 = (C - A * x2) / B;
-	if(swapped)
-	{
-		std::swap(x1, y1);
-		std::swap(x2, y2);
+		int i = order[j];
+		if(filter.count(i) == 0)
+		{
+			if(constraintTypes[i] == CT_LINEAR && constraints[i * 3] * tx + constraints[i * 3 + 1] * ty > constraints[i * 3 + 2]) // + EPS  to the end?)
+			{
+				return false;
+			}
+			else if (constraintTypes[i] == CT_CIRCLE &&
+				(tx - constraints[i * 3]) * (tx - constraints[i * 3]) + (ty - constraints[i * 3 + 1]) * (ty - constraints[i * 3 + 1]) > constraints[i * 3 + 2] * constraints[i * 3 + 2])
+			{
+				return false;
+			}
+		}
 	}
 	return true;
 }
 
-bool intersectCircleCircle(float u1, float v1, float r1, float u2, float v2, float r2, float& x1, float& y1, float& x2, float& y2)
+void CPLPSolver::createRandomOrder()
 {
-	return intersectLineCircle(u1 - u2, v1 - v2, .5f * ((r2 + r1) * (r2 - r1) + (u1 + u2) * (u1 - u2) + (v1 + v2) * (v1 - v2)), u1, v1, r1, x1, y1, x2, y2);
+	order.clear();
+	for(int i = 0; i < constraints.size() / 3; i++)
+	{
+		order.push_back(i);
+	}
+	std::random_shuffle(order.begin(), order.end());
 }
+
 
 void CPLPSolver::solveFeasibility()
 {
@@ -277,68 +269,110 @@ void CPLPSolver::Solve(float& resX, float& resY)
 {
 	//printArray(constraints);
 	
+	filter.clear();
+	createRandomOrder();
 	
-	printArray(constraints);
+	float tx = 0.f;
+	float ty = 0.f;
+	float tx2 = 0.f;
+	float ty2 = 0.f;
 	
-	//TODO randomized algorithm with circle constraints as well - feaseibility? 
+	resX = u;
+	resY = v;
 	
-	solveFeasibility();
-	if(!feasible)
-	{
-		return;
-	}
-	//if program reached this point, it means problem is feasible
+	printOrder(order);
 	
-	float tx = u;
-	float ty = v;
-	
-	if(pointSatisfiesConstraints(tx, ty))
-	{
-		//lucky - destination is inside constraints
-		resX = u;
-		resY = v;
-		return;
-	}
-	
-	float minDistSqr = 1e9;
-	
-	//a not too elegant solution: searching all intersection points, and orthogonal projection points on the constraint lines, filtering them and finding the closest one
-	//constraint intersection points
-	std::unordered_set<int> filter(2);
 	for(int i = 0; i < constraints.size() / 3; i++)
 	{
-		for(int j = i + 1; j < constraints.size() / 3; j++)
+		if(pointSatisfiesConstraint(resX, resY, order[i]))
 		{
-			filter.clear();
-			filter.insert(i);
-			filter.insert(j);
-			float tdist;
-			if(intersectLines(constraints[i * 3], constraints[i * 3 + 1], constraints[i * 3 + 2], constraints[j * 3], constraints[j * 3 + 1], constraints[j * 3 + 2], tx, ty)
-			&& pointSatisfiesConstraints(tx, ty, filter) && ((tdist = (tx - u) * (tx - u) + (ty - v) * (ty - v)) < minDistSqr))
-			{
-				resX = tx;
-				resY = ty;
-				minDistSqr = tdist;
-			}
+			continue;
 		}
-	}
-	
-	//orthogonal projection points
-	for(int i = 0; i < constraints.size() / 3; i++)
-	{
-		filter.clear();
-		filter.insert(i);
-		float tdist;
-		orthogonalProjectionOfPointOnLine(constraints[i * 3], constraints[i * 3 + 1], constraints[i * 3 + 2], u, v, tx, ty);
-		if(pointSatisfiesConstraints(tx, ty, filter) && ((tdist = (tx - u) * (tx - u) + (ty - v) * (ty - v)) < minDistSqr))
+		int id = order[i];
+		int pos = id * 3;
+		
+		if(constraintTypes[id] == CT_LINEAR)
 		{
+			OrthogonalProjectionOfPointOnLine(constraints[pos], constraints[pos + 1], constraints[pos + 2], u, v, tx, ty);
+		}
+		else
+		{
+			OrthogonalProjectionOfPointOnCircle(constraints[pos], constraints[pos + 1], constraints[pos + 2], u, v, tx, ty);
+		}
+		filter.clear();
+		filter.insert(id);
+		
+		float minDistSqr = 1e9;
+		float tdist;
+		if(pointSatisfiesConstraints(tx, ty, i))
+		{
+			tdist = (tx - u) * (tx - u) + (ty - v) * (ty - v);
+			minDistSqr = tdist;
 			resX = tx;
 			resY = ty;
-			minDistSqr = tdist;
 		}
 		
+		
+		for(int j = 0; j < i; j++)
+		{
+			int jd = order[j];
+			filter.clear();
+			filter.insert(id);
+			filter.insert(jd);
+			
+			int pos2 = jd * 3;
+			bool onePoint = false;
+			bool hasIntersection = false;
+			if(constraintTypes[id] == CT_LINEAR && constraintTypes[jd] == CT_LINEAR)
+			{
+				hasIntersection = IntersectLines(constraints[pos], constraints[pos + 1], constraints[pos + 2], constraints[pos2], constraints[pos2 + 1], constraints[pos2 + 2], tx, ty);
+				onePoint = true;
+			}
+			else if(constraintTypes[id] == CT_LINEAR && constraintTypes[jd] == CT_CIRCLE)
+			{
+				hasIntersection = IntersectLineCircle(constraints[pos], constraints[pos + 1], constraints[pos + 2], constraints[pos2], constraints[pos2 + 1], constraints[pos2 + 2], tx, ty, tx2, ty2);
+			}
+			else if(constraintTypes[id] == CT_CIRCLE && constraintTypes[jd] == CT_LINEAR)
+			{
+				hasIntersection = IntersectLineCircle(constraints[pos2], constraints[pos2 + 1], constraints[pos2 + 2], constraints[pos], constraints[pos + 1], constraints[pos + 2], tx, ty, tx2, ty2);
+			}
+			else if(constraintTypes[id] == CT_CIRCLE && constraintTypes[jd] == CT_CIRCLE)
+			{
+				hasIntersection = IntersectCircleCircle(constraints[pos], constraints[pos + 1], constraints[pos + 2], constraints[pos2], constraints[pos2 + 1], constraints[pos2 + 2], tx, ty, tx2, ty2);
+			}
+			if(hasIntersection)
+			{
+				if(pointSatisfiesConstraints(tx, ty, i))
+				{
+					tdist = (tx - u) * (tx - u) + (ty - v) * (ty - v);
+					if(tdist < minDistSqr)
+					{
+						resX = tx;
+						resY = ty;
+						minDistSqr = tdist;
+					}
+				}
+				
+				if(!onePoint && pointSatisfiesConstraints(tx2, ty2, i))
+				{
+					tdist = (tx2 - u) * (tx2 - u) + (ty2 - v) * (ty2 - v);
+					if(tdist < minDistSqr)
+					{
+						resX = tx2;
+						resY = ty2;
+						minDistSqr = tdist;
+					}
+				}
+			}
+		}
+		if(minDistSqr == 1e9)
+		{
+			feasible = false;
+			return;
+		}
 	}
 	
-	//TODO using a quadratic library, or optimizing current solution : currently runtime should be O(n^2) where n is number of constraints
+	//TODO optimizing current solution : currently runtime should be O(n^2) where n is number of constraints,
+	// but the average runtime should be O(n) if implementation is the same as in [De Berg et al. 2008]
 }
 

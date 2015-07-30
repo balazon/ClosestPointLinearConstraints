@@ -7,10 +7,13 @@
 
 struct Test
 {
-	Test(float u, float v, std::vector<float> constraints, bool feasible, float optX, float optY);
+	Test(float u, float v, std::vector<float> linearConstraints, std::vector<float> circleConstraints, bool feasible, float optX, float optY);
 	//problem
 	float u, v;
+	//constraints: linear constraints
 	std::vector<float> constraints;
+	std::vector<float> circleConstraints;
+	
 	
 	//expected results
 	bool feasible;

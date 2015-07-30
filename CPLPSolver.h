@@ -37,7 +37,19 @@ private:
 	
 	bool pointSatisfiesConstraints(float tx, float ty, const std::unordered_set<int>& filterIndexes = std::unordered_set<int>{});
 	
+	//nth constraint in array (not in the random order)
+	bool pointSatisfiesConstraint(float tx, float ty, int n);
+	
+	//with regard to random order
+	bool pointSatisfiesConstraints(float tx, float ty, int n);
+	
 	void solveFeasibility();
+	
+	void createRandomOrder();
+	
+	std::vector<int> order;
+	
+	std::unordered_set<int> filter;
 	
 };
 
