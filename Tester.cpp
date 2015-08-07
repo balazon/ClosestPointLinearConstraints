@@ -36,7 +36,7 @@ void Tester::InitTests()
 				  1.f, -1.f, 0,
 				  0, 1.f, 0};
 	constraints.assign(c1, c1 + 3 * 3);
-	Test t1{1.f, 1.f, constraints, circleConstraints, false, 0.f, 0.f};
+	Test t1{1.f, 1.f, constraints, circleConstraints, true, 2.5f, 2.5f * (sqrtf(2.f) - 1)};
 	AddTest(t1);
 	
 	float c2[] = {-1.f, 1.f, 2.5f,
@@ -103,6 +103,25 @@ void Tester::InitTests()
 	circleConstraints.assign(cc2, cc2 + 3 * 2);
 	Test t10{3.f, -3.f, constraints, circleConstraints, true, 4.f, 1.f};
 	AddTest(t10);
+	
+	
+	float c11[] = {1.f, 0.f, 0.f,
+				   0.f, 1.f, 0.f,
+				   -3.f, -4.f, -12.f};
+	constraints.assign(c11, c11 + 3 * 3);
+	circleConstraints.assign(cc, cc);
+	Test t11{5.f, 0.f, constraints, circleConstraints, true, 1.f, 1.f};
+	AddTest(t11);
+	
+	float c12[] = {1.f, 0.f, 0.f,
+				   -1.f, 0.f, -4.f,
+				   0.f, 1.f, 0.f};
+	constraints.assign(c12, c12 + 3 * 3);
+	Test t12{1.f, 0.5f, constraints, circleConstraints, true, 2.f, 0.5f};
+	AddTest(t12);
+	
+	Test t13{3.f, 4.f, constraints, circleConstraints, true, 2.f, 2.f};
+	AddTest(t13);
 }
 
 void Tester::AddTest(Test t)
