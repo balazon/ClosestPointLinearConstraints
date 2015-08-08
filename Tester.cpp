@@ -122,6 +122,31 @@ void Tester::InitTests()
 	
 	Test t13{3.f, 4.f, constraints, circleConstraints, true, 2.f, 2.f};
 	AddTest(t13);
+	
+	float c14[] = {-3.f, 1.f, -24.f,
+				   -3.f, -1.f, -30.f};
+	float cc14[] = {3.f, 3.f, 3.f};
+	constraints.assign(c14, c14 + 3 * 2);
+	circleConstraints.assign(cc14, cc14 + 3 * 1);
+	Test t14{0.f, 0.f, constraints, circleConstraints, true, 6.f, 3.f};
+	AddTest(t14);
+	
+	float c15[] = {-1.f, 0.f, -5.f,
+				   1.f, -1.f, 5.f};
+	float cc15[] = {0.f, 3.f, 3.f};
+	constraints.assign(c15, c15 + 3 * 2);
+	circleConstraints.assign(cc15, cc15 + 3 * 1);
+	Test t15{0.f, 0.f, constraints, circleConstraints, true, 3.f, 3.f};
+	AddTest(t15);
+	
+	float c16[] = {-.5f, 1.f, -3.f};
+	float cc16[] = {1.f, 2.f, sqrtf(10.f),
+					4.f, 2.f, 1.f};
+	constraints.assign(c16, c16 + 3 * 1);
+	circleConstraints.assign(cc16, cc16 + 3 * 2);
+	Test t16{0.f, 0.f, constraints, circleConstraints, true, 4.f, 1.f};
+	AddTest(t16);
+				
 }
 
 void Tester::AddTest(Test t)
