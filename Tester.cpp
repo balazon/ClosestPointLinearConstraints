@@ -146,7 +146,8 @@ void Tester::InitTests()
 	circleConstraints.assign(cc16, cc16 + 3 * 2);
 	Test t16{0.f, 0.f, constraints, circleConstraints, true, 4.f, 1.f};
 	AddTest(t16);
-				
+
+	
 }
 
 void Tester::AddTest(Test t)
@@ -172,7 +173,11 @@ void Tester::RunTests()
 		int constraintCount = t.constraints.size() / 3;
 		for(int i = 0; i < constraintCount; i++)
 		{
-			solver.AddConstraintLinear(t.constraints[i * 3], t.constraints[i * 3 + 1], t.constraints[i * 3 + 2]);
+			float A = t.constraints[i * 3];
+			float B = t.constraints[i * 3 + 1];
+			float C = t.constraints[i * 3 + 2];
+			
+			solver.AddConstraintLinear(A, B, C);
 		}
 		int circleConstraintCount = t.circleConstraints.size() / 3;
 		for(int i = 0; i < circleConstraintCount; i++)
